@@ -1,54 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Игра</title>
+    <title>Игра в Telegram</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-        }
-        h1 {
-            color: #4CAF50;
-        }
-        input, button {
-            padding: 10px;
-            margin: 10px;
-            font-size: 16px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        h1 { color: #4CAF50; }
+        input, button { padding: 10px; margin: 10px; font-size: 16px; }
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
     </style>
 </head>
 <body>
-    <h1>Игра Uno в Telegram</h1>
-    <p>Введите количество игроков:</p>
-    <input type="number" id="playersCount" placeholder="Количество игроков">
-    <button onclick="submitData()">Начать</button>
+    <h1>Игра в Telegram</h1>
+
+    <div id="setup">
+        <p>Введите количество игроков:</p>
+        <input type="number" id="playersCount" placeholder="Количество игроков">
+        <button onclick="startGame()">Начать игру</button>
+    </div>
+
+    <div id="gameSection" style="display:none;">
+        <h2>Таблица лидеров</h2>
+        <table id="leaderboard">
+            <thead>
+                <tr>
+                    <th>Игрок</th>
+                    <th>Очки</th>
+                    <th>Добавить очки</th>
+                </tr>
+            </thead>
+            <tbody id="playersList"></tbody>
+        </table>
+    </div>
 
     <script>
-        function submitData() {
-            const playersCount = document.getElementById('playersCount').value;
+        let players = [];
 
-            if (playersCount) {
-                // Отправляем данные обратно боту
-                Telegram.WebApp.sendData(playersCount);
-                alert("Данные отправлены!");
-            } else {
+        function startGame() {
+            const playersCount = document.getElementById('playersCount').value;
+            if (playersCount < 1) {
                 alert("Введите количество игроков.");
+                return;
+            }
+
+            for (let i = 1; i <= playersCount; i++) {
+                players.push({ name: `Игрок ${i}`, score: 0 });
+            }
+
+            document.getElementById("setup").style.display = "none";
+            document.getElementById("gameSection").style.display = "block";
+            updateLeaderboard();
+
+            // Отправляем данные в Telegram
+            Telegram.WebApp.sendData(JSON.stringify(players));
+        }
+
+        function updateLeaderboard() {
+            let playersList = document.getElementById("playersList");
+            playersList.innerHTML = "";
+
+            players.forEach((player, index) => {
+                let row = `<tr>
+                    <td>${player.name}</td>
+                    <td>${player.score}</td>
+                    <td><button onclick="addScore(${index})">+ Очки</button></td>
+                </tr>`;
+                playersList.innerHTML += row;
+            });
+        }
+
+        function addScore(index) {
+            let points = prompt(`Введите очки для ${players[index].name}`);
+            if (!isNaN(points) && points > 0) {
+                players[index].score += parseInt(points);
+                updateLeaderboard();
+
+                // Обновляем данные в Telegram
+                Telegram.WebApp.sendData(JSON.stringify(players));
             }
         }
 
-        Telegram.WebApp.ready(); // Уведомляем Telegram, что WebApp готов
+        Telegram.WebApp.ready();
     </script>
 </body>
 </html>
