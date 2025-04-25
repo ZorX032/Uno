@@ -18,12 +18,21 @@
 <body>
     <h1>Игра в Telegram</h1>
 
+    <!-- Ввод количества игроков -->
     <div id="setup">
         <p>Введите количество игроков:</p>
         <input type="number" id="playersCount" placeholder="Количество игроков">
-        <button onclick="startGame()">Начать игру</button>
+        <button onclick="startGame()">Далее</button>
     </div>
 
+    <!-- Ввод имен игроков -->
+    <div id="nameSection" style="display:none;">
+        <h2>Введите имена игроков</h2>
+        <div id="playerInputs"></div>
+        <button onclick="confirmNames()">Начать игру</button>
+    </div>
+
+    <!-- Таблица лидеров и управление очками -->
     <div id="gameSection" style="display:none;">
         <h2>Таблица лидеров</h2>
         <table id="leaderboard">
@@ -31,11 +40,12 @@
                 <tr>
                     <th>Игрок</th>
                     <th>Очки</th>
-                    <th>Добавить очки</th>
+                    <th>Изменить очки</th>
                 </tr>
             </thead>
             <tbody id="playersList"></tbody>
         </table>
+        <button onclick="endGame()">Завершить игру</button>
     </div>
 
     <script>
@@ -48,15 +58,31 @@
                 return;
             }
 
+            let playerInputs = document.getElementById("playerInputs");
+            playerInputs.innerHTML = "";
+
             for (let i = 1; i <= playersCount; i++) {
-                players.push({ name: `Игрок ${i}`, score: 0 });
+                let inputField = `<p>Игрок ${i}: <input type="text" id="player${i}" placeholder="Имя игрока"></p>`;
+                playerInputs.innerHTML += inputField;
             }
 
             document.getElementById("setup").style.display = "none";
+            document.getElementById("nameSection").style.display = "block";
+        }
+
+        function confirmNames() {
+            let playerInputs = document.getElementById("playerInputs").children;
+            players = [];
+
+            for (let i = 0; i < playerInputs.length; i++) {
+                let inputField = playerInputs[i].querySelector("input");
+                players.push({ name: inputField.value || `Игрок ${i+1}`, score: 0 });
+            }
+
+            document.getElementById("nameSection").style.display = "none";
             document.getElementById("gameSection").style.display = "block";
             updateLeaderboard();
 
-            // Отправляем данные в Telegram
             Telegram.WebApp.sendData(JSON.stringify(players));
         }
 
@@ -68,21 +94,29 @@
                 let row = `<tr>
                     <td>${player.name}</td>
                     <td>${player.score}</td>
-                    <td><button onclick="addScore(${index})">+ Очки</button></td>
+                    <td>
+                        <input type="number" id="scoreInput${index}" placeholder="Введите очки">
+                        <button onclick="modifyScore(${index})">Обновить</button>
+                    </td>
                 </tr>`;
                 playersList.innerHTML += row;
             });
         }
 
-        function addScore(index) {
-            let points = prompt(`Введите очки для ${players[index].name}`);
-            if (!isNaN(points) && points > 0) {
+        function modifyScore(index) {
+            let points = document.getElementById(`scoreInput${index}`).value;
+            if (!isNaN(points)) {
                 players[index].score += parseInt(points);
                 updateLeaderboard();
-
-                // Обновляем данные в Telegram
                 Telegram.WebApp.sendData(JSON.stringify(players));
+            } else {
+                alert("Введите корректное число.");
             }
+        }
+
+        function endGame() {
+            alert("Игра завершена! Итоги отправлены.");
+            Telegram.WebApp.sendData(JSON.stringify({ action: "end", players: players }));
         }
 
         Telegram.WebApp.ready();
