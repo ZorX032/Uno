@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Игра в Telegram</h1>
+    <p>Введите количество игроков:</p>
+    <input type="number" id="playersCount" placeholder="Количество игроков">
+    <button onclick="submitData()">Начать</button>
+
+    <script>
+        function submitData() {
+            const playersCount = document.getElementById('playersCount').value;
+
+            if (playersCount) {
+                // Отправляем данные обратно боту
+                Telegram.WebApp.sendData(playersCount);
+                alert("Данные отправлены!");
+            } else {
+                alert("Введите количество игроков.");
+            }
+        }
+
+        Telegram.WebApp.ready(); // Уведомляем Telegram, что WebApp готов
+    </script>
+</body>
+</html>
